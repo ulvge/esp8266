@@ -1,4 +1,4 @@
-
+#include "comm.h"
 /**
  * 固件升级函数
  * 在需要升级的地方，加上这个函数即可，例如setup中加的updateBin();
@@ -8,7 +8,7 @@ void updateBin()
 {
     Serial.println("start update");
     WiFiClient UpdateClient;
-    t_httpUpdate_return ret = ESPhttpUpdate.update(UpdateClient, upUrl);
+    t_httpUpdate_return ret = ESPhttpUpdate.update(UpdateClient, g_updateURL);
     switch (ret) {
     case HTTP_UPDATE_FAILED: // 当升级失败
         Serial.println("[update] Update failed.");

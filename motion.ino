@@ -1,3 +1,15 @@
+
+ 
+#include "comm.h"
+ // 定义Wi-Fi账号和密码
+const char* wifiCredentials[][2] = {
+  {"FAST_FFF43A", "1234567890"},
+  {"5530", "123456780"},
+  {"hxzy_guest", "hxzy123123!"}
+};
+
+const int wifiCount = sizeof(wifiCredentials) / sizeof(wifiCredentials[0]);
+
 /*
  *检查数据，发送心跳
  */
@@ -53,9 +65,9 @@ void doTCPClientTick()
             Serial.println(getMsg); // 打印截取到的消息值
         }
         if (getMsg == "on") { // 如果收到指令on==打开灯
-            turnOnLed();
+            digitalWrite(outputPin, HIGH);
         } else if (getMsg == "off") { // 如果收到指令off==关闭灯
-            turnOffLed();
+            digitalWrite(outputPin, LOW);
         } else if (getMsg == "update") { // 如果收到指令update
             updateBin();                 // 执行升级函数
         }
@@ -68,6 +80,34 @@ void doTCPClientTick()
 /**************************************************************************
                                  WIFI
 ***************************************************************************/
+
+//连接wifi
+void setup_wifi() {
+  delay(10);
+
+  while(1){
+    for (int i = 0; i < wifiCount; i++) {
+      Serial.printf("Connecting to %s\n", wifiCredentials[i][0]);
+      
+      WiFi.begin(wifiCredentials[i][0], wifiCredentials[i][1]);
+
+      delay(1000);
+      //等待WiFi连接
+      if (WiFi.status() != WL_CONNECTED) {
+        Serial.print(".");
+      } else{
+          //wifi连接成功后输出成功信息
+          Serial.println("");
+          Serial.println("WiFi Connected!");   //显示wifi连接成功
+          Serial.println(WiFi.localIP());       //返回wifi分配的IP
+          Serial.println(WiFi.macAddress());  //返回设备的MAC地址
+          Serial.println(""); 
+          randomSeed(micros());
+          return;
+      }
+    }
+  }
+}
 /*
   WiFiTick
   检查是否需要初始化WiFi
@@ -78,28 +118,98 @@ void doWiFiTick()
 {
     static bool startSTAFlag = false;
     static bool taskStarted = false;
-    static uint32_t lastWiFiCheckTick = 0;
 
     if (!startSTAFlag) {
         startSTAFlag = true;
         WiFi.disconnect();
         WiFi.mode(WIFI_STA);
-        WiFi.begin(wifi_name, wifi_password);
     }
 
     // 未连接1s重连
     if (WiFi.status() != WL_CONNECTED) {
-        if (millis() - lastWiFiCheckTick > 1000) {
-            lastWiFiCheckTick = millis();
-        }
-    }
-    // 连接成功建立
-    else {
-        if (taskStarted == false) {
-            taskStarted = true;
-            Serial.print("\r\nGet IP Address: ");
-            Serial.println(WiFi.localIP());
-            startTCPClient();
-        }
+        setup_wifi();
+    }else{
+        // 连接成功之后
+        startTCPClient();
     }
 }
+
+int g_ledMode = LED_MODE_OFF;
+
+// cmd enable disable. 
+void setLed(int mode){
+  static int state = 0;
+  static int blinkCount = 0;
+  static int enable = 1;
+  switch(mode){
+    case LED_MODE_EN:
+        enable = 1;
+        break;
+    case LED_MODE_DIS:
+        enable = 0;
+    case LED_MODE_OFF:
+        digitalWrite(ledPinRed, LOW);
+        digitalWrite(ledPinPink, LOW);
+        break;
+    case LED_MODE_ON_1:
+      if (!enable) break;
+      digitalWrite(ledPinRed, HIGH);
+    break;
+    case LED_MODE_OFF_1:
+      if (!enable) break;
+      digitalWrite(ledPinRed, LOW);
+    break;
+    case LED_MODE_ON_2:
+      if (!enable) break;
+      digitalWrite(ledPinPink, HIGH);
+    break;
+    case LED_MODE_OFF_2:
+      if (!enable) break;
+      digitalWrite(ledPinPink, LOW);
+    break;
+    case LED_MODE_ON_ALL:
+      if (!enable) break;
+      digitalWrite(ledPinRed, HIGH);
+      digitalWrite(ledPinPink, HIGH);
+    case LED_MODE_BLINK:
+      if (blinkCount++ > 100){
+        blinkCount = 0;
+        state = !state;
+        digitalWrite(ledPinRed, state);
+        digitalWrite(ledPinPink, state);
+      }
+    break;
+  }
+  g_ledMode = mode;
+}
+
+
+const unsigned int debounceDelay = 30;
+unsigned int lastDebounceTime;
+void monitorButton() {
+  // read the state of the pushbutton value:
+  static int buttonStateLast = 0;
+  static int isChanged = 0;
+  int buttonState = digitalRead(buttonPin);
+// 检查是否需要去抖（按键状态是否发生变化）
+  if (buttonState == LOW){
+    if (buttonState != buttonStateLast) { // 刚按下，记录当前时间
+      isChanged = 0;
+      lastDebounceTime = millis(); // 记录上次变化的时间
+    }else{// 一直被按下
+      if ((millis() - lastDebounceTime) >= debounceDelay) {//满足去抖条件
+        if (isChanged == 0){
+          isChanged = 1;
+          int newState = !digitalRead(outputPin);
+          digitalWrite(outputPin, newState);
+          setLed(newState ? LED_MODE_ON_1 : LED_MODE_OFF_1);
+          Serial.printf("Button pressed, now outputPin state is %d\n", newState);
+        }
+      }
+    }
+  }else{
+    isChanged = 0;
+  }
+  buttonStateLast = buttonState; // update
+}
+

@@ -7,24 +7,14 @@
  */
 #include <ESP8266WiFi.h>
 #include <ESP8266httpUpdate.h>
+#include "comm.h"
 
-#define server_ip "bemfa.com" // 巴法云服务器地址默认即可
-#define server_port "8344"    // 服务器端口，tcp创客云端口8344
-
-//********************需要修改的部分*******************//
-
-#define wifi_name "J09 502"                      // WIFI名称，区分大小写，不要写错
-#define wifi_password "qwertyuiop111"            // WIFI密码
-String UID = "e8882ae28d5bde39766c330ea913fd46"; // 用户私钥，可在控制台获取,修改为自己的UID
-String TOPIC = "light002";                       // 主题名字，可在控制台新建
 const int LED_Pin = 12;                          // 单片机LED引脚值，D2是NodeMcu引脚命名方式，其他esp8266型号将D2改为自己的引脚
 
 const int buttonPin = 13;  // input
 const int ledPinRed = 16;  // output
 const int ledPinPink = 12; // output
 const int outputPin = 14;  // output
-
-String upUrl = "http://bin.bemfa.com/b/3BcYmQzODQ1NDdmZDdmNGJiMTllNGFiNGRiODM3YjFjNDc=switch001.bin"; // 固件链接，在巴法云控制台复制、粘贴到这里即可
 
 //**************************************************//
 // 最大字节数
@@ -48,14 +38,13 @@ void doTCPClientTick();
 void startTCPClient();
 void sendtoTCPServer(String p);
 
-// led控制函数，具体函数内容见下方
-#define turnOnLed() digitalWrite(LED_Pin, LOW);
-#define turnOffLed() digitalWrite(LED_Pin, HIGH);
 
 // 初始化，相当于main 函数
 void setup()
 {
+    delay(200);
     Serial.begin(115200);
+    delay(500);
 
     pinMode(buttonPin, INPUT);
 
@@ -76,4 +65,6 @@ void loop()
 {
     doWiFiTick();
     doTCPClientTick();
+    monitorButton();
+    delay(10);
 }
