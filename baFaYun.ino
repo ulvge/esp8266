@@ -13,7 +13,7 @@ const int LED_Pin = 12;                          // 单片机LED引脚值，D2�
 
 const int buttonPin = 13;  // input
 const int ledPinRed = 16;  // output
-const int ledPinPink = 12; // output
+const int ledPinBlue = 12; // output
 const int outputPin = 14;  // output
 
 //**************************************************//
@@ -49,7 +49,7 @@ void setup()
     pinMode(buttonPin, INPUT);
 
     pinMode(ledPinRed, OUTPUT);
-    pinMode(ledPinPink, OUTPUT);
+    pinMode(ledPinBlue, OUTPUT);
     setLed(LED_MODE_BLINK);
 
     pinMode(outputPin, OUTPUT);
