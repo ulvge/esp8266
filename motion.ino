@@ -4,8 +4,8 @@
 // 定义Wi-Fi账号和密码
 const char *wifiCredentials[][2] = {
     {"FAST_FFF43A", "1234567890"},
-    {"5530", "123456780"},
-    {"hxzy_guest", "hxzy123123!"}};
+    {"5530", "123456780"}
+    };
 
 const int wifiCount = sizeof(wifiCredentials) / sizeof(wifiCredentials[0]);
 
@@ -73,7 +73,12 @@ void doTCPClientTick()
             setLed(LED_MODE_BLUE_OFF);
         } else if (getMsg == "update") { // 如果收到指令update
             updateBin();                 // 执行升级函数
+        } else if (getMsg == "led en") {
+            setLed(LED_MODE_EN); 
+        } else if (getMsg == "led dis") { // 如果收到指令update
+            setLed(LED_MODE_DIS); 
         }
+        
 
         TcpClient_Buff = "";
         TcpClient_BuffIndex = 0;
@@ -84,40 +89,43 @@ void doTCPClientTick()
                                  WIFI
 ***************************************************************************/
 
-// 连接wifi
-void setup_wifi()
+//0:未连上
+//1:已连接
+int setup_wifi()
 {
-    delay(10);
+    static int i = -1;
+    static int retry = 0;
 
-    while (1) {
-        for (int i = 0; i < wifiCount; i++) {
-            Serial.printf("Connecting to %s\n", wifiCredentials[i][0]);
-
+    if (WiFi.status() == WL_CONNECTED) {
+        return 1;
+    }
+    // 10ms 进一次，有 wifiCount 组，当前组，重试500, 5s次。
+    if (retry > 500) {
+        retry = 0;
+    }
+    if (retry == 0) {
+        i++;
+        if (i >= wifiCount) {
+            i = 0;
+        }
+        if (WiFi.status() != WL_CONNECTED) {
             WiFi.begin(wifiCredentials[i][0], wifiCredentials[i][1]);
-
-            for (int retry = 0; retry <= 3; retry++) {
-                if (WiFi.status() != WL_CONNECTED) {
-                    delay(1000);
-                } else {
-                    break;
-                }
-            }
-            // 等待WiFi连接
-            if (WiFi.status() != WL_CONNECTED) {
+            Serial.printf("Connecting to %s\n", wifiCredentials[i][0]);
+        }else{
+            return 1;
+        }
+    }else{
+        // 等待WiFi连接
+        if (WiFi.status() != WL_CONNECTED) {
+            if (retry % 100 == 0){
                 Serial.print(".");
-            } else {
-                randomSeed(micros());
-                // wifi连接成功后输出成功信息
-                Serial.println("");
-                Serial.println("WiFi Connected!"); // 显示wifi连接成功
-                Serial.println(WiFi.localIP());    // 返回wifi分配的IP
-                Serial.println(WiFi.macAddress()); // 返回设备的MAC地址
-                Serial.println("");
-                randomSeed(micros());
-                return;
             }
+        } else {
+            return 1;
         }
     }
+    retry++;
+    return 0;
 }
 /*
   WiFiTick
@@ -136,11 +144,23 @@ void doWiFiTick()
         WiFi.mode(WIFI_STA);
     }
 
-    // 未连接1s重连
-    if (WiFi.status() != WL_CONNECTED) {
-        setup_wifi();
+    if (setup_wifi() == 1){
         // 每次连接成功之后，设置一次
-        startTCPClient();
+        if (!taskStarted){
+            taskStarted = true;
+            
+            // wifi连接成功后输出成功信息
+            Serial.println("");
+            Serial.println("WiFi Connected!"); // 显示wifi连接成功
+            Serial.println(WiFi.localIP());    // 返回wifi分配的IP
+            Serial.println(WiFi.macAddress()); // 返回设备的MAC地址
+            Serial.println("");
+            randomSeed(micros());
+            
+            startTCPClient();
+        }
+    }else{
+        taskStarted = false;
     }
 }
 

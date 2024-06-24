@@ -57,6 +57,8 @@ void setup()
 
     pinMode(LED_Pin, OUTPUT);
     digitalWrite(LED_Pin, HIGH);
+    Serial.println("");
+    Serial.println("");
     Serial.println("Beginning...");
 }
 
