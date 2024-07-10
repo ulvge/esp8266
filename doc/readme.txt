@@ -45,3 +45,20 @@
 	pip install esptool
 	esptool.py --port COM3 erase_flash
 	esptool.py --port COM3 --baud 115200 write_flash --flash_size=detect  0 1471.bin
+
+
+
+
+    **********************************************************************************************************
+
+    https://blog.csdn.net/bemfa/article/details/107367547?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522172059668216800186528446%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fblog.%2522%257D&request_id=172059668216800186528446&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_ecpm_v1~rank_v31_ecpm-1-107367547-null-null.nonecase&utm_term=light002%2Fup&spm=1018.2226.3001.4450
+    程序讲解：在本示例中，ESP8266 有两个角色，
+    esp8266上传LED状态：一个是temp(传感器数据)主题消息的发布者，esp8266往这个主题推送消息，微信小程序就可以收到传感器数据了。
+    手机控制esp8266开关：esp8266联网后，订阅light002，手机往这个主题推送消息，esp8266就能收到手机的控制的指令了。
+
+
+    点击创建主题，要创建两个主题，一个主题用来传递传感器数据，另一个主题用来进行LED灯的控制。在本例程中一个主题名字是：temp ，
+    另一个主题名字是：light002，可自定义或修改，不过下方微信小程序里面的主题名字要和esp8266的主题保持一致，以便正常的往同一个主题发布订阅。
+	
+	
+	MQTT 调试工具 MQTT.fx

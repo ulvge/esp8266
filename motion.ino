@@ -243,6 +243,7 @@ void monitorButton()
                     digitalWrite(outputPin, newState);
                     setLed(newState ? LED_MODE_RED_ON : LED_MODE_RED_OFF);
                     setLed(LED_MODE_BLUE_OFF);
+                    updateState(true);
                     Serial.printf("Button pressed, now outputPin state is %d\n", newState);
                 }
             }
@@ -251,4 +252,26 @@ void monitorButton()
         isChanged = 0;
     }
     buttonStateLast = buttonState; // update
+}
+
+void updateState(int isNeedUpdate)
+{
+    static int isUpdateFinished = false;
+    if (isNeedUpdate) {
+        isUpdateFinished = false;
+    }
+    if (!isUpdateFinished){
+        if (!TCPclient.connected()){
+            return;
+        }
+        int nowState = digitalRead(outputPin);
+        if (nowState == 1) {
+            publishClient.publish(TOPIC"/up", "ON");
+            //publishClient.publish(TOPIC"/up", "on");
+        } else {
+            publishClient.publish(TOPIC"/up", "OFF");
+            //publishClient.publish(TOPIC"/up", "off");
+        }
+        isUpdateFinished = true;
+    }
 }

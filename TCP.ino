@@ -16,12 +16,17 @@ void sendtoTCPServer(String p)
  */
 void startTCPClient()
 {
-    if (TCPclient.connect(server_ip, atoi(server_port))) {
+    if (TCPclient.connect(server_ip, server_port)) {
         Serial.print("\nConnected to server:");
-        Serial.printf("%s:%d\r\n", server_ip, atoi(server_port));
+        Serial.printf("%s:%d\r\n", server_ip, server_port);
 
         String tcpTemp = "";                                       // 初始化字符串
-        tcpTemp = "cmd=1&uid=" + UID + "&topic=" + TOPIC + "\r\n"; // 构建订阅指令
+        tcpTemp = "cmd=1&uid=";
+        tcpTemp += UID;
+        tcpTemp += "&topic=";
+        tcpTemp += TOPIC;
+        tcpTemp += "\r\n"; // 构建订阅指令
+
         sendtoTCPServer(tcpTemp);                                  // 发送订阅指令
         tcpTemp = "";                                              // 清空
         /*
